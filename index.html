@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>เค้กวันเกิด — ขอพรแล้วเป่าเทียน</title>
+  <style>
+    :root{
+      --bg:#fff7fb;--card:#fff;--accent:#ff7ab6;
+    }
+    *{box-sizing:border-box;font-family:system-ui,Segoe UI,Roboto,'Noto Sans Thai',sans-serif}
+    body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:linear-gradient(180deg,#fff 0%,#ffeef8 100%);padding:24px;gap:20px}
+
+    .wrap{max-width:900px;width:100%;display:grid;grid-template-columns:1fr 420px;gap:24px;align-items:start}
+    @media(max-width:880px){.wrap{grid-template-columns:1fr;}}
+
+    .scene{width:490px;background:var(--card);border-radius:18px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,0.06);display:flex;flex-direction:column;gap:18px}
+    h1{margin:0;font-size:20px;color:#6b1140}
+    p{margin:0;color:#6b1140aa}
+
+    .controls{display:flex;gap:8px;align-items:center;margin-top:12px}
+    input[type=text]{flex:1;padding:12px 14px;border-radius:10px;border:1px solid #ffd7eb;background:#fff;outline:none;font-size:15px}
+    button{background:var(--accent);color:white;border:none;padding:12px 16px;border-radius:10px;font-weight:600;cursor:pointer;box-shadow:0 6px 16px rgba(255,122,182,0.22)}
+    button:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+
+    /* cake zone */
+    .cake-stage{display:flex;flex-direction:column;align-items:center;gap:14px;padding:18px}
+    .cake img{max-width:260px;height:auto;display:block}
+
+    .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.25);visibility:hidden;opacity:0;transition:all 260ms}
+    .modal.show{visibility:visible;opacity:1}
+    .card{background:linear-gradient(180deg,#fff,#fff6fb);padding:28px;border-radius:16px;box-shadow:0 18px 48px rgba(107,17,64,0.18);max-width:420px;width:92%;text-align:center}
+    .card h2{margin:0 0 8px 0;color:#6b1140}
+    .card p{margin:0 0 12px 0;color:#6b1140aa}
+    .close{margin-top:12px;padding:10px 14px;border-radius:10px;border:none;background:#ffb6d6;color:#6b1140;font-weight:600;cursor:pointer}
+
+    canvas.confetti{position:fixed;left:0;top:0;pointer-events:none;z-index:80}
+
+    .hint{background:linear-gradient(180deg,#fff,#fff8fb);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px}
+    .hint h3{margin:0 0 8px 0}
+    .hint ul{margin:0;padding-left:18px;color:#6b1140aa}
+
+    footer.small{font-size:12px;color:#6b1140aa;text-align:center;margin-top:8px}
+
+    /* ปรับแถบเพลงให้เข้าธีม */
+    .music-container{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+      margin-top:12px;
+      padding-top:12px;
+      border-top:1px solid #ffd7eb;
+    }
+    audio{
+      width:100%;
+      border-radius:10px;
+      outline:none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <section class="scene" aria-label="หน้าเค้กวันเกิด">
+      <div>
+        <h1>เค้กวันเกิด🎂</h1>
+        <p>พิมพ์ขอพรของคุณลงในช่อง แล้วกด "เป่าเทียน" เพื่อดูการ์ดคำอวยพรน่ารักๆ</p>
+      </div>
+
+      <div class="cake-stage">
+        <div class="cake" role="img" aria-label="เค้กวันเกิด">
+          <img src="zbd.png" alt="Birthday Cake">
+        </div>
+        <footer class="small">กดปุ่มเพื่อเป่าเทียน — แต่อย่าลืมพัดเบา ๆ ในจินตนาการด้วยนะ 😉</footer>
+      </div>
+
+      <div class="controls">
+        <input id="wishInput" type="text" placeholder="พิมพ์ขอพรของคุณที่นี่..." aria-label="ช่องพิมพ์ขอพร" />
+        <button id="blowBtn" disabled aria-disabled="true">เป่าเทียน</button>
+      </div>
+    </section>
+
+    <aside class="hint">
+      <h3>วิธีใช้</h3>
+      <ul>
+        <li>พิมพ์คำขอพรก่อน ปุ่ม "เป่าเทียน" จะถูกปลดล็อก</li>
+        <li>กดปุ่มแล้วเป่า — จะได้เห็นการ์ดคำอวยพรสวย ๆ</li>
+        <li>การ์ดจะมีข้อความขอพรของคุณและตกแต่งน่ารัก ๆ พร้อมปุ่มปิด</li>
+      </ul>
+
+      <!-- 🎵 แถบเพลง -->
+      <div class="music-container">
+        <p style="margin:0;color:#6b1140aa;font-size:14px;">Music</p>
+        <audio id="bgMusic" controls loop>
+          <source src="music.mp3" type="audio/mpeg">
+        </audio>
+      </div>
+    </aside>
+  </div>
+
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="card" role="document">
+      <h2>สุขสันต์วันเกิด! 🎉</h2>
+      <p id="cardMsg">ขอให้มีความสุขมาก ๆ นะ!</p>
+      <button id="closeCard" class="close">ปิด</button>
+    </div>
+  </div>
+
+  <canvas class="confetti" id="confettiCanvas"></canvas>
+
+  <script>
+    // ควบคุมคำอวยพร
+    const wishInput = document.getElementById('wishInput');
+    const blowBtn = document.getElementById('blowBtn');
+    const modal = document.getElementById('modal');
+    const cardMsg = document.getElementById('cardMsg');
+    const closeCard = document.getElementById('closeCard');
+    const confettiCanvas = document.getElementById('confettiCanvas');
+
+    wishInput.addEventListener('input', () => {
+      const ok = wishInput.value.trim().length > 0;
+      blowBtn.disabled = !ok;
+      blowBtn.setAttribute('aria-disabled', (!ok).toString());
+    });
+
+    blowBtn.addEventListener('click', () => {
+      const wish = wishInput.value.trim();
+      const cuteTemplates = [
+        `🎈 ${wish} — ขอให้สมหวังทุกประการนะครับ ปีนี้ก็โตขึ้นอีกปีแล้วขอให้ปีนี้เป็นปีที่วิเศษสำหรับคุณ สุขใจ สดชื่น และเจอแต่สิ่งดี ๆ ตลอดไป และขอให้ความสุขอยู่กับคุณเสมอ`,
+        // `✨ ${wish} — ขอให้ปีนี้เป็นปีที่วิเศษสำหรับคุณ!`,
+        // `🥳 ${wish} — สุขใจ สดชื่น และเจอแต่สิ่งดี ๆ ตลอดไป!`,
+        // `🌟 ${wish} — ขอให้ความสุขอยู่กับคุณเสมอ!`
+      ];
+      const pick = cuteTemplates[Math.floor(Math.random()*cuteTemplates.length)];
+      cardMsg.textContent = pick;
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden','false');
+      launchConfetti();
+      blowBtn.disabled = true;
+      blowBtn.setAttribute('aria-disabled','true');
+    });
+
+    closeCard.addEventListener('click', () => {
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden','true');
+    });
+
+    modal.addEventListener('click', (e) => { if(e.target === modal) closeCard.click(); });
+
+    const ctx = confettiCanvas.getContext('2d');
+    let confettiPieces = [];
+    function resizeCanvas(){ confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function randomBetween(a,b){return a + Math.random()*(b-a)}
+    function makePiece(){
+      return {
+        x: randomBetween(0,confettiCanvas.width),
+        y: randomBetween(-20, -100),
+        w: randomBetween(6,12),
+        h: randomBetween(8,18),
+        rot: randomBetween(0,Math.PI*2),
+        speedY: randomBetween(1,4),
+        spin: randomBetween(-0.1,0.1),
+        color: `hsl(${Math.floor(randomBetween(0,360))}deg 75% 60%)`,
+        life: randomBetween(80,180)
+      }
+    }
+
+    function launchConfetti(){
+      confettiPieces = [];
+      const count = 120;
+      for(let i=0;i<count;i++) confettiPieces.push(makePiece());
+      requestAnimationFrame(confettiLoop);
+      setTimeout(()=>{confettiPieces = []},2800);
+    }
+
+    function confettiLoop(){
+      ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+      confettiPieces.forEach((p,idx)=>{
+        p.x += Math.sin((p.life/10)+idx)*0.6;
+        p.y += p.speedY;
+        p.rot += p.spin;
+        p.life -= 1;
+        ctx.save();
+        ctx.translate(p.x,p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.restore();
+      });
+      confettiPieces = confettiPieces.filter(p=>p.life>0 && p.y < confettiCanvas.height+50);
+      if(confettiPieces.length>0) requestAnimationFrame(confettiLoop);
+    }
+
+    wishInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && !blowBtn.disabled){ blowBtn.click(); }});
+    wishInput.focus();
+  </script>
+</body>
+</html>
